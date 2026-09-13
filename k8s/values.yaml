@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: platform-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+kubernetes:
+  namespace: fiap-games

@@ -1,0 +1,33 @@
+# platform-api is the only workload in this system with any Kubernetes API
+# access — a namespaced Role, not a ClusterRole: pod listing only, scoped to
+# this one namespace. No Node-listing permission is needed since each Pod
+# object already carries its own scheduled node in spec.nodeName.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-api
+  namespace: {{ .Values.global.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-api-pod-reader
+  namespace: {{ .Values.global.namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-api-pod-reader
+  namespace: {{ .Values.global.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: platform-api
+    namespace: {{ .Values.global.namespace }}
+roleRef:
+  kind: Role
+  name: platform-api-pod-reader
+  apiGroup: rbac.authorization.k8s.io
