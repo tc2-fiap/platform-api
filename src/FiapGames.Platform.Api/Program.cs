@@ -35,6 +35,8 @@ builder.Services.AddSingleton<IKubernetes>(_ =>
 var podsNamespace = builder.Configuration["Kubernetes:Namespace"] ?? "fiap-games";
 builder.Services.AddScoped<IPodReader>(sp => new KubernetesPodReader(sp.GetRequiredService<IKubernetes>(), podsNamespace));
 builder.Services.AddScoped<IPodService, PodService>();
+builder.Services.AddScoped<IDeploymentRestarter>(sp => new KubernetesDeploymentRestarter(sp.GetRequiredService<IKubernetes>(), podsNamespace));
+builder.Services.AddScoped<IDeploymentService, DeploymentService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
