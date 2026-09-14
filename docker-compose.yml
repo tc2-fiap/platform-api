@@ -1,8 +1,8 @@
 services:
   platform-api:
     build:
-      context: ./src/FiapGames.Platform.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/FiapGames.Platform.Api/Dockerfile
     restart: unless-stopped
     ports:
       - "8086:8080"
