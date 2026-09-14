@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-api-config
+  namespace: {{ .Values.global.namespace }}
+data:
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_VIRTUALHOST: "/"

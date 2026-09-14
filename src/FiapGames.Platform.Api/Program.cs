@@ -1,9 +1,11 @@
 using FiapGames.Platform.Api.Application.Abstractions;
 using FiapGames.Platform.Api.Application.Services;
+using FiapGames.Platform.Api.Consumers;
 using FiapGames.Platform.Api.Endpoints;
 using FiapGames.Platform.Api.Infrastructure.Kubernetes;
 using FiapGames.Shared.Infrastructure.Extensions;
 using k8s;
+using MassTransit;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -58,6 +60,37 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddHealthChecks();
+
+// platform-api otherwise has no RabbitMQ integration at all — it owns no
+// schema and sits outside the purchase-flow event system entirely (see
+// notes.md 75). This is the one exception, added purely to receive
+// TokenRevokedEvent so a revoked Admin token stops working against this
+// service's pod-introspection endpoints too.
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<TokenRevokedConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(
+            builder.Configuration["RabbitMq:Host"] ?? "localhost",
+            builder.Configuration["RabbitMq:VirtualHost"] ?? "/",
+            h =>
+            {
+                h.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
+                h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
+            });
+
+        // Explicit, service-scoped endpoint name — see orders-api's
+        // Program.cs for why relying on MassTransit's default naming
+        // (which ignores the namespace) is unsafe once two services
+        // declare a same-named consumer class for the same event.
+        cfg.ReceiveEndpoint("platform-api-token-revoked", e =>
+        {
+            e.ConfigureConsumer<TokenRevokedConsumer>(context);
+        });
+    });
+});
 
 var app = builder.Build();
 

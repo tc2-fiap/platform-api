@@ -15,9 +15,14 @@ spec:
       labels:
         app: platform-api
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
       serviceAccountName: platform-api
       containers:
         - name: platform-api
+          securityContext:
+            allowPrivilegeEscalation: false
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -25,6 +30,26 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
+            - name: RabbitMq__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: platform-api-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMq__VirtualHost
+              valueFrom:
+                configMapKeyRef:
+                  name: platform-api-config
+                  key: RABBITMQ_VIRTUALHOST
+            - name: RabbitMq__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_DEFAULT_PASS
             - name: Jwt__Secret
               valueFrom:
                 secretKeyRef:
