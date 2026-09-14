@@ -2,7 +2,7 @@
 
 # FIAP Games — Platform API
 
-Cluster introspection for the admin "System Health" dashboard — the sixth backend service, added specifically because listing Kubernetes pods doesn't belong to any of the five domain services (users/catalog/orders/payments/notifications). No database, no schema, no messaging — it's a stateless, authenticated proxy over the Kubernetes API.
+Cluster introspection for the admin "System Health" dashboard — the sixth backend service, added specifically because listing Kubernetes pods doesn't belong to any of the five domain services (users/catalog/orders/payments/notifications). No database, no schema — it's a stateless, authenticated proxy over the Kubernetes API. Its only broker connection is consuming `TokenRevokedEvent`, a cross-cutting auth event unrelated to the purchase flow it otherwise sits entirely outside of (`../documentation/spec/notes.md` 84).
 
 ## Run standalone
 
