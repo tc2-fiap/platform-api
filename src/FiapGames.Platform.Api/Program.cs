@@ -104,14 +104,22 @@ app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health");
-app.MapGet("/version", () => Results.Ok(new
+// Shared by two routes below: the bare /version (unauthenticated, reached
+// only via kubectl port-forward — not under /api/* so the Ingress can't
+// route to it) and /api/platform/version (Admin-gated, reached through the
+// Ingress like any other route — the admin dashboard's source for this).
+// Same handler, not duplicated logic, registered at two paths because
+// nothing else makes the unauthenticated one reachable from a browser.
+static IResult GetVersion() => Results.Ok(new
 {
     sha = Environment.GetEnvironmentVariable("BUILD_SHA") ?? "unknown",
     buildTime = Environment.GetEnvironmentVariable("BUILD_TIME") ?? "unknown"
-}));
+});
 
-app.MapPlatformEndpoints();
+app.MapHealthChecks("/health");
+app.MapGet("/version", GetVersion);
+
+app.MapPlatformEndpoints(GetVersion);
 
 try
 {
