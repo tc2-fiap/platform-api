@@ -43,4 +43,25 @@ public sealed class KubernetesDeploymentRestarter : IDeploymentRestarter
 
         await _client.AppsV1.PatchNamespacedDeploymentAsync(patch, deploymentName, _namespace, cancellationToken: cancellationToken);
     }
+
+    // Same patch mechanism as RestartAsync above, targeting spec.replicas
+    // instead of the pod template -- 0 stops the Deployment (the controller
+    // terminates its pod and creates none), 1 starts it again. Deliberately
+    // not `kubectl delete pod`: the Deployment controller would just
+    // recreate a deleted pod instantly, so "stop" only means anything at
+    // this level.
+    public async Task ScaleAsync(string deploymentName, int replicas, CancellationToken cancellationToken = default)
+    {
+        var patch = new V1Patch(
+            new
+            {
+                spec = new
+                {
+                    replicas
+                }
+            },
+            V1Patch.PatchType.MergePatch);
+
+        await _client.AppsV1.PatchNamespacedDeploymentAsync(patch, deploymentName, _namespace, cancellationToken: cancellationToken);
+    }
 }

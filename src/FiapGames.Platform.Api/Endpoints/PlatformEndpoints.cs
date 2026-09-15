@@ -25,11 +25,30 @@ public static class PlatformEndpoints
         // ServiceAccount's RBAC resourceNames restriction is the real
         // enforcement — see k8s/templates/rbac.yaml). No new image is
         // pulled; only useful when the currently-loaded image is already
-        // up to date. Fires the restart and returns — the rollout itself
-        // is asynchronous.
+        // up to date. Fires the restart and returns 200 with a small
+        // {service, restartedAtUtc} body confirming what was triggered —
+        // the rollout itself is still asynchronous, this doesn't wait for
+        // the new pod to become Ready.
         group.MapPost("/admin/services/{name}/restart", async (string name, IDeploymentService service, CancellationToken cancellationToken) =>
         {
             var result = await service.RestartAsync(name, cancellationToken);
+            return result.ToHttpResult();
+        }).RequireAuthorization(p => p.RequireRole("Admin"));
+
+        // Scales the named Deployment to 0/1 replicas — an actual stop, not
+        // a rolling restart (which never drops below 1). DeploymentService
+        // rejects "platform-api" for stop specifically: it's what serves
+        // this endpoint, so stopping it would brick the admin API with no
+        // recovery path but kubectl.
+        group.MapPost("/admin/services/{name}/stop", async (string name, IDeploymentService service, CancellationToken cancellationToken) =>
+        {
+            var result = await service.StopAsync(name, cancellationToken);
+            return result.ToHttpResult();
+        }).RequireAuthorization(p => p.RequireRole("Admin"));
+
+        group.MapPost("/admin/services/{name}/start", async (string name, IDeploymentService service, CancellationToken cancellationToken) =>
+        {
+            var result = await service.StartAsync(name, cancellationToken);
             return result.ToHttpResult();
         }).RequireAuthorization(p => p.RequireRole("Admin"));
 
