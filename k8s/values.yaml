@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: platform-api
+  repository: ghcr.io/tc2-fiap/platform-api
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 service:
   port: 8080
